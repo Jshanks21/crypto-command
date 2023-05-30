@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
+const nextConfig = {
+  experimental: {
+    serverActions: true,
+  },
+  images: {
+    domains: [
+      'logos.covalenthq.com',
+      'www.datocms-assets.com',
+    ],
+  },
+}
 
 module.exports = {
   ...nextConfig,

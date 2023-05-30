@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate": "npx prisma generate",
+    "migrate": "npx prisma migrate dev --name"
   },
   "dependencies": {
-    "@types/node": "20.1.7",
+    "@prisma/client": "^4.14.1",
     "@types/react": "18.2.6",
     "@types/react-dom": "18.2.4",
     "autoprefixer": "10.4.14",
@@ -22,7 +24,10 @@
     "typescript": "5.0.4"
   },
   "devDependencies": {
+    "@types/node": "^20.2.5",
     "client-only": "^0.0.1",
-    "server-only": "^0.0.1"
+    "prisma": "^4.14.1",
+    "server-only": "^0.0.1",
+    "ts-node": "^10.9.1"
   }
 }

@@ -1,19 +1,33 @@
 import 'server-only'
-import { getAllTokens, Token } from '@/utils/getPrices'
+import prisma from '@/prisma/client';
+import Image from 'next/image';
+import { Token } from '@prisma/client'
+
+// TODO: add a fallback if DB doesn't work to use getAllTokens() from utils/getTokens.ts
+
+const getDBTokens = async (): Promise<Token[]> => {
+  try {
+    const data = await prisma.token.findMany();
+    //console.log('data:', data)
+    return data
+  } catch (error: any) {
+    console.log('get tokens error:', error)
+    throw Error('Something went wrong!')
+  }
+}
 
 const Balances = ({ allTokens }: { allTokens: Token[] }) => {
+  const sortedTokens = [...allTokens].sort((a, b) => a.id - b.id);
   return (
     <>
-      {allTokens.map((token: Token, i) => (
+      {sortedTokens.map((token: Token, i) => (
         <div key={token.contract_address + i} className='flex-between border border-slate-400 rounded-xl p-4'>
-
           <div>
             <h2 className='text-xl font-semibold text-slate-100'>
-              {token.contract_ticker_symbol} Balance
+             {token.id}. {token.contract_symbol} Balance
             </h2>
             <span className='flex-center gap-2 orange_gradient text-xl font-bold'>
-              {/* TODO: needs configuration update for multiple hostnames in next.config to use next/image */}
-              <img
+              <Image
                 alt='token-logo'
                 width={40}
                 height={40}
@@ -26,10 +40,10 @@ const Balances = ({ allTokens }: { allTokens: Token[] }) => {
 
           <div>
             <h2 className='text-xl font-semibold text-slate-100'>
-              {token.contract_ticker_symbol} Price
+              {token.contract_symbol} Price
             </h2>
             <span className='orange_gradient text-xl font-bold'>
-              ${token.quote_rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}
+              ${token.quote_rate && token.quote_rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}
             </span>
           </div>
 
@@ -38,7 +52,7 @@ const Balances = ({ allTokens }: { allTokens: Token[] }) => {
               Total Value
             </h2>
             <span className='orange_gradient text-xl font-bold'>
-              {token.pretty_quote}
+              ${token.quote && token.quote.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}
             </span>
           </div>
         </div>
@@ -48,7 +62,7 @@ const Balances = ({ allTokens }: { allTokens: Token[] }) => {
 }
 
 const AllTokenDisplay = async () => {
-  const allTokens = await getAllTokens()
+  const allTokens = await getDBTokens()
 
   return (
     <section className='w-full flex flex-col gap-4'>
