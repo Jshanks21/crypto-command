@@ -1,7 +1,7 @@
 import 'server-only'
 import prisma from '@/prisma/client';
 import Image from 'next/image';
-import { Token } from '@prisma/client'
+import type { Token } from '@prisma/client'
 
 // TODO: add a fallback if DB doesn't work to use getAllTokens() from utils/getTokens.ts
 
@@ -18,13 +18,22 @@ const getDBTokens = async (): Promise<Token[]> => {
 
 const Balances = ({ allTokens }: { allTokens: Token[] }) => {
   const sortedTokens = [...allTokens].sort((a, b) => a.id - b.id);
+  const totalUSD = sortedTokens.reduce((acc, token) => acc + token.quote, 0)
   return (
     <>
+      <div className='flex-between border border-slate-400 rounded-xl p-4'>
+        <h2 className='text-xl font-semibold text-slate-100'>
+          Total USD
+        </h2>
+        <span className='orange_gradient text-xl font-bold'>
+          ${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}
+        </span>
+      </div>
       {sortedTokens.map((token: Token, i) => (
         <div key={token.contract_address + i} className='flex-between border border-slate-400 rounded-xl p-4'>
           <div>
             <h2 className='text-xl font-semibold text-slate-100'>
-             {token.id}. {token.contract_symbol} Balance
+              {token.id}. {token.contract_symbol} Balance
             </h2>
             <span className='flex-center gap-2 orange_gradient text-xl font-bold'>
               <Image

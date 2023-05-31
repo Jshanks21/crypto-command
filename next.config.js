@@ -7,6 +7,7 @@ const nextConfig = {
     domains: [
       'logos.covalenthq.com',
       'www.datocms-assets.com',
+      'lh3.googleusercontent.com',
     ],
   },
 }

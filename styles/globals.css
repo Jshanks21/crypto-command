@@ -111,7 +111,7 @@ dark: .gradient still looks better with just a darker .main:before so WIP or rem
 }
 
 .outline_btn {
-  @apply rounded-full border border-black bg-transparent py-1.5 px-5 text-black transition-all hover:bg-black hover:text-white text-center text-sm font-inter flex items-center justify-center;
+  @apply rounded-full border border-white bg-transparent py-1.5 px-5 text-white transition-all hover:bg-white hover:text-black text-center text-sm font-inter flex items-center justify-center; /* light: border-black text-black hover:bg-black hover:text-white */
 }
 
 .head_text {
@@ -170,7 +170,7 @@ dark: .gradient still looks better with just a darker .main:before so WIP or rem
 
 /* Nav Component */
 .logo_text {
-  @apply max-sm:hidden font-satoshi font-semibold text-lg text-black tracking-wide;
+  @apply max-sm:hidden font-satoshi font-semibold text-lg text-white tracking-wide; /* light: text-black */
 }
 
 .dropdown {
