@@ -17,6 +17,8 @@ const getDBTokens = async (): Promise<Token[]> => {
 }
 
 const Balances = ({ allTokens }: { allTokens: Token[] }) => {
+  //const tokensToShare = allTokens.filter((token) => token.quote && token.quote < 1000)
+
   const sortedTokens = [...allTokens].sort((a, b) => a.id - b.id);
   const totalUSD = sortedTokens.reduce((acc, token) => acc + token.quote, 0)
   return (

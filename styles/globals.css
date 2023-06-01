@@ -40,6 +40,60 @@
   filter: invert(1);
 }
 
+/* fade in fade out effect */
+.form {
+  cursor: pointer;
+  &.inactive {
+    opacity: 0;
+    width: 0px;
+    transition: all 0.5s ease-in-out;
+    -webkit-transition-delay: 0.4s;
+    -moz-transition-delay: 0.4s;
+    -o-transition-delay: 0.4s;
+    transition-delay: 0.4s;
+  }
+  &.active {
+    opacity: 1;
+    transition: all 0.75s ease-in-out;
+  }
+}
+
+.hamburger {
+  cursor: pointer;
+  &.inactive {
+    opacity: 0;
+    width: 0px;
+    transition: all 0.5s ease-in-out;
+    -webkit-transition-delay: 0.4s;
+    -moz-transition-delay: 0.4s;
+    -o-transition-delay: 0.4s;
+    transition-delay: 0.4s;
+    .ul {
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+      -webkit-transition-delay: 0s;
+      -moz-transition-delay: 0s;
+      -o-transition-delay: 0s;
+      transition-delay: 0s;
+    }
+  }
+  &.active {
+    opacity: 1;
+    transition: all 0.75s ease-in-out;
+    .ul {
+      opacity: 1;
+      transition: opacity 0.5s ease-in-out;
+      -webkit-transition-delay: 0.5s;
+      -moz-transition-delay: 0.5s;
+      -o-transition-delay: 0.5s;
+      transition-delay: 0.5s;
+    }
+    .lines {
+      background: #fab800;
+    }
+  }
+}
+
 .gradient {
   height: fit-content;
   z-index: 3;

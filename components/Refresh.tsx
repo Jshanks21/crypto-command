@@ -2,7 +2,7 @@
 import React from 'react'
 
 // TODO: add alert for success/failure, loading, and animation for refresh
-// update alert to be a toast notification
+// use new dialog feature to create self-closing notification modal (or toast notification)
 // TODO: add refresh button to each token?
 
 function Refresh({ className }: { className?: string }) {
