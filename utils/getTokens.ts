@@ -1,8 +1,7 @@
-import { STATIC_ACCOUNTS } from '@/utils/constants'
+import { Account } from '@prisma/client';
+const COVALENT_API_KEY= process.env.NEXT_PUBLIC_COVALENT_API_KEY
 
-const COVALENT_API_KEY= process.env.COVALENT_API_KEY
-
-export type APIToken = {
+export type Token = {
   contract_decimals: number,
   contract_name: string,
   contract_ticker_symbol: string,
@@ -39,28 +38,39 @@ const getDataFromCovalentAPI = async (URL: string) => {
   return json.data.items
 }
 
-const getAllTokens = async (chain = 1, nft = false, getCachedNFTs = false) => {
-  // Get token data for each account
-  const tokenData: APIToken[][] = await Promise.all(STATIC_ACCOUNTS.map(async (address) => {
-    let URL = `https://api.covalenthq.com/v1/${chain}/address/${address}/balances_v2/?quote-currency=USD&format=JSON&nft=${nft}&no-nft-fetch=${getCachedNFTs}`
+const getSingleAccountData = async (address: string, chain = 1, nft = false, getCachedNFTs = false) => {
+  const URL = `https://api.covalenthq.com/v1/${chain}/address/${address}/balances_v2/?quote-currency=USD&format=JSON&nft=${nft}&no-nft-fetch=${getCachedNFTs}`
+  const tokens: Token[] = await getDataFromCovalentAPI(URL)
 
-    const tokens: APIToken[] = await getDataFromCovalentAPI(URL)
+  tokens.filter((token: Token) => {
+    return BigInt(token.balance) > 0n && token.quote > 0
+  })
+
+  return tokens
+}
+
+const getMultipleAccountData = async (accounts: Account[], chain = 1, nft = false, getCachedNFTs = false) => {
+  // Get token data for each account
+  const tokenData: Token[][] = await Promise.all(accounts.map(async (account) => {
+    let URL = `https://api.covalenthq.com/v1/${chain}/address/${account.address}/balances_v2/?quote-currency=USD&format=JSON&nft=${nft}&no-nft-fetch=${getCachedNFTs}`
+
+    const tokens: Token[] = await getDataFromCovalentAPI(URL)
 
     // Filter out the spam and zero-balance tokens
-    return tokens.filter((token: APIToken) => {
+    return tokens.filter((token: Token) => {
       return token.contract_ticker_symbol !== 'CGCX' && token.contract_ticker_symbol !== 'BCT' //consider refactoring this to be a list of spam/trash tokens to filter out
     })
-    .filter((token: APIToken) => {
+    .filter((token: Token) => {
       return BigInt(token.balance) > 0n && token.quote > 0
     })
   }))
 
   // Flatten the arrays to have a single array with all tokens
-  const allTokens: APIToken[] = tokenData.flat()
+  const allTokens: Token[] = tokenData.flat()
 
   // Combine the balances of duplicate tokens
-  const combinedTokens = allTokens.reduce((acc: APIToken[], token: APIToken) => {
-    const existingToken = acc.find((t: APIToken) => t.contract_address === token.contract_address)
+  const combinedTokens = allTokens.reduce((acc: Token[], token: Token) => {
+    const existingToken = acc.find((t: Token) => t.contract_address === token.contract_address)
     if (existingToken) {
       existingToken.balance = (BigInt(existingToken.balance) + BigInt(token.balance)).toString()
       existingToken.quote = existingToken.quote + token.quote
@@ -74,4 +84,4 @@ const getAllTokens = async (chain = 1, nft = false, getCachedNFTs = false) => {
   return combinedTokens
 }
 
-export { getAllTokens }
+export { getMultipleAccountData, getSingleAccountData }

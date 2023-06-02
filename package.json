@@ -11,7 +11,7 @@
     "migrate": "npx prisma migrate dev --name"
   },
   "dependencies": {
-    "@prisma/client": "^4.14.1",
+    "@prisma/client": "^4.15.0",
     "@types/react": "18.2.6",
     "@types/react-dom": "18.2.4",
     "autoprefixer": "10.4.14",
@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/node": "^20.2.5",
     "client-only": "^0.0.1",
-    "prisma": "^4.14.1",
+    "prisma": "^4.15.0",
     "server-only": "^0.0.1",
     "ts-node": "^10.9.1"
   }
