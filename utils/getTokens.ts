@@ -21,9 +21,10 @@ export type Token = {
   pretty_quote_24h: string,
   nft_data: boolean | null,
   is_spam: boolean | null,
+  account: string,
 }
 
-const getDataFromCovalentAPI = async (URL: string) => {
+const getDataFromCovalentAPI = async (URL: string): Promise<Token[]> => {
   let headers = new Headers()
   const authString = `${COVALENT_API_KEY}:`
   headers.set('Authorization', 'Basic ' + btoa(authString))
@@ -39,30 +40,24 @@ const getDataFromCovalentAPI = async (URL: string) => {
 }
 
 const getSingleAccountData = async (address: string, chain = 1, nft = false, getCachedNFTs = false) => {
-  const URL = `https://api.covalenthq.com/v1/${chain}/address/${address}/balances_v2/?quote-currency=USD&format=JSON&nft=${nft}&no-nft-fetch=${getCachedNFTs}`
-  const tokens: Token[] = await getDataFromCovalentAPI(URL)
+  let URL = `https://api.covalenthq.com/v1/${chain}/address/${address}/balances_v2/?quote-currency=USD&format=JSON&nft=${nft}&no-nft-fetch=${getCachedNFTs}`
+  let tokens: Token[] = await getDataFromCovalentAPI(URL)
 
-  tokens.filter((token: Token) => {
-    return BigInt(token.balance) > 0n && token.quote > 0
+  // Add the account address that holds the tokens to each token
+  tokens = tokens.map(token => ({ ...token, account: address }))
+
+  return tokens.filter((token: Token) => {
+    return token.contract_ticker_symbol !== 'CGCX' && token.contract_ticker_symbol !== 'BCT' //consider refactoring this to be a list of spam/trash tokens to filter out
   })
-
-  return tokens
+  .filter((token: Token) => {
+    return BigInt(token.balance) > 0n && token.quote > 0 && token.type !== 'dust'
+  })
 }
 
-const getMultipleAccountData = async (accounts: Account[], chain = 1, nft = false, getCachedNFTs = false) => {
+const getCombinedAccountData = async (accounts: Account[], chain = 1, nft = false, getCachedNFTs = false) => {
   // Get token data for each account
   const tokenData: Token[][] = await Promise.all(accounts.map(async (account) => {
-    let URL = `https://api.covalenthq.com/v1/${chain}/address/${account.address}/balances_v2/?quote-currency=USD&format=JSON&nft=${nft}&no-nft-fetch=${getCachedNFTs}`
-
-    const tokens: Token[] = await getDataFromCovalentAPI(URL)
-
-    // Filter out the spam and zero-balance tokens
-    return tokens.filter((token: Token) => {
-      return token.contract_ticker_symbol !== 'CGCX' && token.contract_ticker_symbol !== 'BCT' //consider refactoring this to be a list of spam/trash tokens to filter out
-    })
-    .filter((token: Token) => {
-      return BigInt(token.balance) > 0n && token.quote > 0
-    })
+    return getSingleAccountData(account.address, chain, nft, getCachedNFTs)
   }))
 
   // Flatten the arrays to have a single array with all tokens
@@ -84,4 +79,4 @@ const getMultipleAccountData = async (accounts: Account[], chain = 1, nft = fals
   return combinedTokens
 }
 
-export { getMultipleAccountData, getSingleAccountData }
+export { getCombinedAccountData, getSingleAccountData, getDataFromCovalentAPI }

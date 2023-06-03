@@ -1,7 +1,6 @@
 import prisma from '@/prisma/client';
-import { Account } from '@prisma/client';
 
-async function addTokenHandler(req: Request) {
+async function addAccountHandler(req: Request) {
   const { accounts, user_id }: { accounts: string[], user_id: number} = await req.json();  
   //console.log('accounts:', accounts)
 
@@ -32,4 +31,4 @@ async function addTokenHandler(req: Request) {
   return new Response(JSON.stringify({ success: true }), { status: 200 });
 }
 
-export { addTokenHandler as POST };
+export { addAccountHandler as POST };

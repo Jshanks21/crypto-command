@@ -3,16 +3,7 @@ import { Session, ISODateString, Profile} from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import prisma from '@/prisma/client';
 import { User as PrismaUser } from '@prisma/client';
-
-export interface CustomSession extends Session {
-  user?: {
-    name?: string | null
-    email?: string | null
-    image?: string | null
-    id?: number | null
-  },
-  expires: ISODateString
-}
+import { CustomSession } from '@/utils/types';
 
 async function getSessionUser(email: string, retryCount = 0): Promise<PrismaUser | null> {
   try {

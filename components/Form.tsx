@@ -1,20 +1,11 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Session, ISODateString } from 'next-auth'
+import { Account } from '@prisma/client'
+import { CustomSession } from '@/utils/types'
 
-interface CustomSession extends Session {
-  user?: {
-    name?: string | null
-    email?: string | null
-    image?: string | null
-    id?: number | null
-  },
-  expires: ISODateString
-}
-
-function Form() {
+function Form({ accounts }: { accounts: Account[]}) {
   const router = useRouter()
   const { data: session } = useSession()
   const [submitting, setSubmitting] = useState(false)
@@ -32,7 +23,7 @@ function Form() {
     const accounts = addressInput.match(regex) || [];
 
     // Save to localStorage
-    localStorage.setItem('addresses', JSON.stringify(accounts));
+    localStorage.setItem('accounts', JSON.stringify(accounts));
 
     // Save accounts to DB
     const res = await fetch('/api/accounts/new', {
@@ -59,6 +50,13 @@ function Form() {
     setAddressInput('');
     router.refresh() 
   }
+
+  useEffect(() => {
+    const savedAccounts = localStorage.getItem('accounts')
+    if (!savedAccounts) {
+      localStorage.setItem('accounts', JSON.stringify(accounts))
+    }
+  }, [])
 
   return (
     <>

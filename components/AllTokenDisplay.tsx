@@ -1,14 +1,15 @@
 import 'server-only'
 import prisma from '@/prisma/client';
-import { Token, getMultipleAccountData } from '../utils/getTokens'
+import { Account } from '@prisma/client';
+import { Token, getCombinedAccountData } from '@/utils/getTokens'
 import Form from './Form';
-import Balances from './Balances';
+import { GlobalBalances } from './Balances';
 
-const getTokens = async (): Promise<Token[]> => {
+export const getTokens = async (): Promise<{ allTokens: Token[]; accounts: Account[]; }> => {
   try {
     const data = await prisma.account.findMany()
-    const accountData = await getMultipleAccountData(data)
-    return accountData
+    const accountData = await getCombinedAccountData(data)
+    return { allTokens: accountData, accounts: data }
   } catch (error: any) {
     console.log('get tokens error:', error)
     throw Error('Something went wrong!')
@@ -16,13 +17,13 @@ const getTokens = async (): Promise<Token[]> => {
 }
 
 const AllTokenDisplay = async () => {
-  const allTokens = await getTokens()
+  const { allTokens, accounts } = await getTokens()
 
   return (
     <>
-      <Form />
+      <Form accounts={accounts} />
       <section className='w-full flex flex-col gap-4 mt-4'>
-        <Balances allTokens={allTokens} />
+        <GlobalBalances allTokens={allTokens} />
       </section>
     </>
   )
