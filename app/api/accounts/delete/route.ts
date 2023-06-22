@@ -2,6 +2,12 @@ import prisma from '@/prisma/client';
 
 async function deleteAccountHandler(req: Request) {
   const { account, user_id }: { account: string, user_id: number } = await req.json();
+
+  // Check for expected values
+  if (!account || !user_id) {
+    console.log('Missing account or user_id');
+    return new Response(JSON.stringify({ success: false, message: 'Missing account or user_id' }), { status: 400 });
+  }
  
   try {
     // Fetch user from database
@@ -31,9 +37,6 @@ async function deleteAccountHandler(req: Request) {
 
   } catch (error: any) {
     console.log(`Error deleting account ${account}:`, error);
-    if (error.code === 'P2016') {
-      return new Response(JSON.stringify({ success: false, message: 'Account not found in database' }), { status: 404 });
-    }
     return new Response(JSON.stringify({ success: false, message: error }), { status: 500 });
   }
 

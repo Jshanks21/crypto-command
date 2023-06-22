@@ -1,6 +1,8 @@
+import 'server-only'
+
 const Loading = () => {
   return (
-    <div className='text-white'>Loading...</div>
+    <div className='text-white'>TOKEN Loading component...</div>
   )
 }
 

@@ -1,28 +1,12 @@
+'use server'
+import 'server-only'
 import { Account } from '@prisma/client';
-const COVALENT_API_KEY= process.env.NEXT_PUBLIC_COVALENT_API_KEY
+import { Token } from './types'
+import prisma from '@/prisma/client';
 
-export type Token = {
-  contract_decimals: number,
-  contract_name: string,
-  contract_ticker_symbol: string,
-  contract_address: string,
-  supports_erc: string[],
-  logo_url: string,
-  last_transferred_at: string,
-  native_token: boolean,
-  type: string,
-  balance: string,
-  balance_24h: string,
-  quote_rate: number,
-  quote_rate_24h: number,
-  quote: number,
-  pretty_quote: string,
-  quote_24h: number,
-  pretty_quote_24h: string,
-  nft_data: boolean | null,
-  is_spam: boolean | null,
-  account: string,
-}
+// TODO: should probably move this code to actions.ts
+
+const COVALENT_API_KEY = process.env.NEXT_PUBLIC_COVALENT_API_KEY
 
 const getDataFromCovalentAPI = async (URL: string): Promise<Token[]> => {
   let headers = new Headers()
@@ -41,24 +25,53 @@ const getDataFromCovalentAPI = async (URL: string): Promise<Token[]> => {
 
 const getSingleAccountData = async (address: string, chain = 1, nft = false, getCachedNFTs = false) => {
   let URL = `https://api.covalenthq.com/v1/${chain}/address/${address}/balances_v2/?quote-currency=USD&format=JSON&nft=${nft}&no-nft-fetch=${getCachedNFTs}`
-  let tokens: Token[] = await getDataFromCovalentAPI(URL)
+  let tokens = await getDataFromCovalentAPI(URL)
 
   // Add the account address that holds the tokens to each token
   tokens = tokens.map(token => ({ ...token, account: address }))
 
+  // Filter out tokens with little or no balance or no quote
   return tokens.filter((token: Token) => {
-    return token.contract_ticker_symbol !== 'CGCX' && token.contract_ticker_symbol !== 'BCT' //consider refactoring this to be a list of spam/trash tokens to filter out
-  })
-  .filter((token: Token) => {
-    return BigInt(token.balance) > 0n && token.quote > 0 && token.type !== 'dust'
+    return token.contract_ticker_symbol !== 'CGCX' && token.contract_ticker_symbol !== 'BCT' &&
+    BigInt(token.balance) > 0n && token.quote > 0 && token.type !== 'dust'
   })
 }
 
-const getCombinedAccountData = async (accounts: Account[], chain = 1, nft = false, getCachedNFTs = false) => {
+async function getTokenDetails(token_address: string, accounts: string[], chain = 1) {
+  // Get all accounts
+  //const accounts = await prisma.account.findMany()
+
   // Get token data for each account
   const tokenData: Token[][] = await Promise.all(accounts.map(async (account) => {
-    return getSingleAccountData(account.address, chain, nft, getCachedNFTs)
+    return getSingleAccountData(account, chain)
   }))
+
+  // Flatten the arrays to have a single array with all tokens
+  const allTokens: Token[] = tokenData.flat()
+
+  // Filter the tokens to only include the selected token
+  const selectedToken = allTokens.filter((token: Token) => {
+    return token_address === token.contract_address
+  })
+
+  return selectedToken
+}
+
+const getCombinedAccountData = async (accounts: Account[] | string[], chain = 1, nft = false, getCachedNFTs = false) => {
+  // Get token data for each account
+  let tokenData: Token[][] = []
+  if (typeof accounts[0] === 'string') {
+    // If the first element is a string, then we have an array of addresses
+    tokenData = await Promise.all((accounts as string[]).map(async (account) => {
+      return getSingleAccountData(account, chain, nft, getCachedNFTs)
+    }))
+    // If the first element is an object, then we have an array of Account types
+  } else if (typeof accounts[0] === 'object') {
+    tokenData = await Promise.all((accounts as Account[]).map(async (account) => {
+      return getSingleAccountData(account.address, chain, nft, getCachedNFTs)
+    }))
+  }
+
 
   // Flatten the arrays to have a single array with all tokens
   const allTokens: Token[] = tokenData.flat()
@@ -75,8 +88,7 @@ const getCombinedAccountData = async (accounts: Account[], chain = 1, nft = fals
     }
   }, [])
 
-  //console.log('token data', combinedTokens)
   return combinedTokens
 }
 
-export { getCombinedAccountData, getSingleAccountData, getDataFromCovalentAPI }
+export { getCombinedAccountData, getSingleAccountData, getTokenDetails }

@@ -1,11 +1,12 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Account } from '@prisma/client'
 import { CustomSession } from '@/utils/types'
 
-function Form({ accounts }: { accounts: Account[]}) {
+// ~~Probably need to import Form into Balances instead of the homepage~~(done) so we have direct access to Form state in order to refresh balances after adding new addresses when not logged in.
+
+function Form() {
   const router = useRouter()
   const { data: session } = useSession()
   const [submitting, setSubmitting] = useState(false)
@@ -20,43 +21,55 @@ function Form({ accounts }: { accounts: Account[]}) {
 
     // Extract addresses from the input using a regular expression
     const regex = /0x[a-fA-F0-9]{40}/g;
-    const accounts = addressInput.match(regex) || [];
+    const newAccounts: string[] = addressInput.match(regex) || [];
 
-    // Save to localStorage
-    localStorage.setItem('accounts', JSON.stringify(accounts));
+    // When logged in, save to DB
+    if (session && (session as CustomSession)?.user?.id) {
+      // Save to DB
+      const res = await fetch('/api/accounts/new', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ accounts: newAccounts, user_id: (session as CustomSession)?.user?.id })
+      })
 
-    // Save accounts to DB
-    const res = await fetch('/api/accounts/new', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ accounts, user_id: (session as CustomSession)?.user?.id })
-    })    
+      // Check for errors
+      if (!res.ok) {
+        const data = await res.json()
+        console.log('data:', data)
 
-    // Check for errors
-    if (!res.ok) {
-      const data = await res.json()
-      console.log('data:', data)
+        setSubmitting(false)
+        alert('error:' + data.message[0]?.meta)
+      } else {
 
-      setSubmitting(false)
-      alert('error:' + data.message[0]?.meta)
+        alert('Successfully added new addresses!')
+      }
+
+
+      // When not logged in, save to localStorage
     } else {
+      // Get saved accounts from localStorage
+      const localAccounts = localStorage.getItem('accounts')
+
+      // Compare localAccounts with accounts and update localStorage if needed
+      if (!localAccounts) {
+        localStorage.setItem('accounts', JSON.stringify(newAccounts))
+      } else {
+        JSON.parse(localAccounts || '[]').forEach((account: string) => {
+          if (!newAccounts.includes(account)) {
+            newAccounts.push(account)
+          }
+        })
+        localStorage.setItem('accounts', JSON.stringify(newAccounts))
+      }
       setSubmitting(false)
-      alert('Successfully added new addresses!')
     }
 
     // Reset form input
     setAddressInput('');
-    router.refresh() 
+    router.refresh()
   }
-
-  useEffect(() => {
-    const savedAccounts = localStorage.getItem('accounts')
-    if (!savedAccounts) {
-      localStorage.setItem('accounts', JSON.stringify(accounts))
-    }
-  }, [])
 
   return (
     <>

@@ -1,6 +1,7 @@
+import 'server-only'
 import '@/styles/globals.css'
-import Nav from '@/components/Nav'
-import Provider from '@/components/Provider'
+import Nav from '@/components/client/Nav'
+import Provider from '@/components/client/Provider'
 
 export const metadata = {
   title: 'Crypto Command HQ',

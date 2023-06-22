@@ -1,5 +1,5 @@
 import NextAuth from 'next-auth/next';
-import { Session, ISODateString, Profile} from 'next-auth';
+import { Profile} from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import prisma from '@/prisma/client';
 import { User as PrismaUser } from '@prisma/client';
@@ -49,6 +49,7 @@ async function findOrCreateUser(profile?: Profile) {
 
 const handler = NextAuth({
   providers: [
+    // TODO: Update these with new credentials for this project to replace the ones from my old project
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
