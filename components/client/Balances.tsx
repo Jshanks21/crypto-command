@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Token } from '@/utils/types'
 import { useSession } from 'next-auth/react'
 import { CustomSession } from '@/utils/types'
-import { getCombinedAccountData } from '@/utils/getTokens'
+import { getCombinedAccountData } from '@/utils/actions'
 
 // Consider replacing the fetch calls to our endpoints with SERVER ACTIONS instead to reduce code and hopefully improve performance and resolve the flickering issue below.
 // Also see `useTransition()` for improving client side submissions or using server side logic/functions on the client

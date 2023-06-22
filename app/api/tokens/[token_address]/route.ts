@@ -1,6 +1,6 @@
 import prisma from '@/prisma/client';
 import { Token } from '@/utils/types';
-import { getSingleAccountData } from '@/utils/getTokens';
+import { getSingleAccountData } from '@/utils/actions';
 
 async function getTokenDetailsHandler(req: Request, { params }: { params: { token_address: string } }) {
   const token_address = params.token_address;

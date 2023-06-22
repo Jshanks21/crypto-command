@@ -1,5 +1,5 @@
 import prisma from '@/prisma/client';
-import { getCombinedAccountData } from '@/utils/getTokens';
+import { getCombinedAccountData } from '@/utils/actions';
 import { parse } from 'url';
 
 async function getTokensHandler(req: Request) {

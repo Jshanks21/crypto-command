@@ -2,51 +2,65 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
-import { Token } from '@/utils/types'
+import { Token, CustomSession } from '@/utils/types'
 import trash from '@/public/assets/icons/trash.svg'
-import { fetchSelectedToken } from '@/utils/actions'
+import { fetchSelectedToken, fetchSavedAccounts } from '@/utils/actions'
 import ListAccount from './ListAccounts'
+import { useSession } from 'next-auth/react'
 
 const TokenBalances = ({ token_address }: { token_address: string }) => {
-  //const { data: session } = useSession()
+  const { data: session } = useSession()
   const [selectedToken, setSelectedToken] = useState<Token[]>([])
-  const [localAccounts, setLocalAccounts] = useState<string[]>([])
-
+  const [accounts, setAccounts] = useState<string[]>([])
 
   const sortedByValue = useMemo(() => selectedToken.sort((a, b) => b.quote - a.quote), [selectedToken]);
   const totalUSD = useMemo(() => selectedToken.reduce((acc, token) => acc + token.quote, 0), [selectedToken]);
   const totalUnits = useMemo(() => selectedToken.reduce((acc, token) => acc + parseInt(token.balance), 0), [selectedToken]);
 
   console.log('sortedByValue', sortedByValue)
+  console.log('session', session)
 
 
   // Reusable function to check if there are local accounts and set them to state
-  const checkLocalAccounts: () => void = () => {
-    const localAccounts = localStorage.getItem('accounts')
-    if (!localAccounts) {
-      console.log('no local accounts')
-      return
+  const checkAccounts: () => void = async () => {
+    if (!session) {
+      const localAccounts = localStorage.getItem('accounts')
+      if (!localAccounts) {
+        console.log('no local accounts')
+        return
+      }
+      setAccounts(JSON.parse(localAccounts))
+    } else if (session && (session as CustomSession)?.user?.id) {
+      console.log('active session:', session)
+
+      try {
+        const res = await fetchSavedAccounts((session as CustomSession)?.user?.id)
+        if (!res || res.length === 0) throw Error('Something went wrong! We could not fetch your tokens.')
+        setAccounts(res)
+      } catch (error: any) {
+        console.log('Error fetching tokens:', error)
+        throw Error('Something went wrong! We could not fetch your tokens.')
+      }
     }
-    setLocalAccounts(JSON.parse(localAccounts))
   }
 
   // Check for local accounts on mount
   useEffect(() => {
-    checkLocalAccounts()
+    checkAccounts()
   }, [])
 
   // Fetch token when local accounts or token address updates (and on mount if there are local accounts)
   useEffect(() => {
-    if (localAccounts.length === 0 || !token_address) return
+    if (accounts.length === 0 || !token_address) return
 
     (async () => {
-      const selectedToken = await fetchSelectedToken(token_address, localAccounts)
+      const selectedToken = await fetchSelectedToken(token_address, accounts)
       console.log({ selectedToken })
 
       setSelectedToken(selectedToken || [])
     })();
 
-  }, [token_address, localAccounts]);
+  }, [token_address, accounts]);
 
   return (
     <>
@@ -124,13 +138,13 @@ const TokenBalances = ({ token_address }: { token_address: string }) => {
 
 
             {sortedByValue.map((token: Token, i: number) => (
-              <div key={token.contract_address + i} className='flex-center'>               
+              <div key={token.contract_address + i} className='flex-center'>
 
                 <ListAccount
                   token={token}
                   token_address={token_address}
-                  localAccounts={localAccounts}
-                  setLocalAccounts={setLocalAccounts}
+                  accounts={accounts}
+                  setAccounts={setAccounts}
                   setSelectedToken={setSelectedToken}
                 />
 

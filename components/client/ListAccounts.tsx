@@ -9,12 +9,12 @@ import { Token } from '@/utils/types'
 type ListAccountProps = {
   token: Token
   token_address: string
-  localAccounts: string[]
-  setLocalAccounts: (localAccounts: string[]) => void
+  accounts: string[]
+  setAccounts: (accounts: string[]) => void
   setSelectedToken: (selectedToken: Token[]) => void
 }
 
-function ListAccount({ token, token_address, localAccounts, setLocalAccounts, setSelectedToken }: ListAccountProps) {
+function ListAccount({ token, token_address, accounts, setAccounts, setSelectedToken }: ListAccountProps) {
   const [isPending, startTransition] = useTransition()
 
   // Function that deletes account from local storage and updates local accounts & selected token state
@@ -23,12 +23,12 @@ function ListAccount({ token, token_address, localAccounts, setLocalAccounts, se
 
     try {
       // Find account in localStorage and remove it
-      const filteredAccounts: string[] = (localAccounts || '[]').filter((acc: string) => acc !== account)
+      const filteredAccounts: string[] = (accounts || '[]').filter((acc: string) => acc !== account)
 
       localStorage.setItem('accounts', JSON.stringify(filteredAccounts))
 
       console.log('filteredAccounts', filteredAccounts)
-      setLocalAccounts(filteredAccounts)
+      setAccounts(filteredAccounts)
 
       //update the token balances
       const selectedToken = await fetchSelectedToken(token_address, filteredAccounts)

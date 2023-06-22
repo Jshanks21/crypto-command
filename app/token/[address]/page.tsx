@@ -1,6 +1,6 @@
 'use server'
 import 'server-only'
-import { getSingleAccountData } from '@/utils/getTokens'
+import { getSingleAccountData } from '@/utils/actions'
 import { Token } from '@/utils/types'
 import prisma from '@/prisma/client';
 import { Suspense } from 'react'

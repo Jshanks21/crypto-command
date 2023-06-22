@@ -1,7 +1,7 @@
 import 'server-only'
 import { Suspense } from 'react'
 import prisma from '@/prisma/client';
-import { getCombinedAccountData } from '@/utils/getTokens'
+import { getCombinedAccountData } from '@/utils/actions'
 import { Token } from '@/utils/types'
 import { GlobalBalances } from '@/components/client/Balances';
 
