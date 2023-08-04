@@ -7,21 +7,13 @@ import copy from '@/public/assets/icons/copy.svg'
 import tick from '@/public/assets/icons/tick.svg'
 import { Token, CustomSession } from '@/utils/types'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
-type ListAccountProps = {
-  token: Token
-  token_address: string
-  accounts: string[]
-  setAccounts: (accounts: string[]) => void
-  setSelectedToken: (selectedToken: Token[]) => void
-}
-
-function ListAccount({ token, token_address, accounts, setAccounts, setSelectedToken }: ListAccountProps) {
+export default function ListAccount({ token }: { token: Token }) {
   const { data: session } = useSession()
   const [isPending, startTransition] = useTransition()
   const [isCopied, setIsCopied] = useState(false)
-
-  console.log('isPending', isPending)
+  const router = useRouter()
 
   // Function that turns tracking for account off and updates accounts & selected token state
   const handleDelete = async (account: string) => {
@@ -42,6 +34,11 @@ function ListAccount({ token, token_address, accounts, setAccounts, setSelectedT
         const data = await res.json()
         console.log('data:', data)
         alert('error:' + data.message[0]?.meta)
+      }
+
+      // If successful, refresh page
+      if (res.ok) {
+        router.refresh()
       }
     }
   }
@@ -77,16 +74,13 @@ function ListAccount({ token, token_address, accounts, setAccounts, setSelectedT
                 className='ml-2'
               />
             )}
-
           </button>
         </div>
-
         <div>
           <span className='orange_gradient text-xl font-bold mr-12'>
             {(parseInt(token.balance) / 10 ** token.contract_decimals).toFixed(4) || 'N/A'}
           </span>
         </div>
-
         <div>
           <span className='orange_gradient text-xl font-bold'>
             ${token.quote && token.quote.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}
@@ -105,5 +99,3 @@ function ListAccount({ token, token_address, accounts, setAccounts, setSelectedT
     </>
   )
 }
-
-export default ListAccount

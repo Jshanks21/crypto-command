@@ -1,61 +1,22 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Token, CustomSession } from '@/utils/types'
-import { fetchSelectedToken, fetchAccounts } from '@/utils/actions'
+import { Token } from '@/utils/types'
 import ListAccount from './ListAccounts'
-import { useSession } from 'next-auth/react'
 
-const TokenBalances = ({ token_address }: { token_address: string }) => {
-  const { data: session } = useSession()
+export default function TokenBalances({ tokenData }: { tokenData: Token[] }) {
   const router = useRouter()
-  const [selectedToken, setSelectedToken] = useState<Token[]>([])
-  const [accounts, setAccounts] = useState<string[]>([])
 
-  const sortedByValue = useMemo(() => selectedToken.sort((a, b) => b.quote - a.quote), [selectedToken]);
-  const totalUSD = useMemo(() => selectedToken.reduce((acc, token) => acc + token.quote, 0), [selectedToken]);
-  const totalUnits = useMemo(() => selectedToken.reduce((acc, token) => acc + parseInt(token.balance), 0), [selectedToken]);
+  const sortedByValue = useMemo(() => tokenData.sort((a, b) => b.quote - a.quote), [tokenData])
+  const totalUSD = useMemo(() => tokenData.reduce((acc, token) => acc + token.quote, 0), [tokenData])
+  const totalUnits = useMemo(() => tokenData.reduce((acc, token) => acc + parseInt(token.balance), 0), [tokenData])
 
-  // Reusable function to check if there are local accounts and set them to state
-  const checkAccounts: () => void = async () => {
-    if (session && (session as CustomSession)?.user?.id) {
-      console.log('active session:', session)
-
-      try {
-        const res = await fetchAccounts((session as CustomSession)?.user?.id)
-        if (!res || res.length === 0) throw Error('Something went wrong! We could not fetch your tokens.')
-        setAccounts(res)
-      } catch (error: any) {
-        console.log('Error fetching tokens:', error)
-        throw Error('Something went wrong! We could not fetch your tokens.')
-      }
-    }
-  }
-
-  // Check for accounts on mount & reload
   useEffect(() => {
-    checkAccounts()
-  }, [session]);
+    if (!sortedByValue || sortedByValue.length === 0) router.push('/')
+  }, [sortedByValue])
 
-  // Fetch token when accounts or token address updates (and on mount if there are local accounts)
-  useEffect(() => {
-    if (accounts.length === 0 || !token_address) return
-
-    (async () => {
-      const selectedToken = await fetchSelectedToken(token_address, accounts)
-      console.log({ selectedToken })
-
-      setSelectedToken(selectedToken || [])
-
-      if (!selectedToken || selectedToken.length === 0) {
-        console.log('redirecting to home page')
-        router.push('/')
-      }
-    })();
-
-  }, [token_address, accounts]);
 
   return (
     <>
@@ -127,10 +88,6 @@ const TokenBalances = ({ token_address }: { token_address: string }) => {
               <div key={token.contract_address + i} className='flex-center'>
                 <ListAccount
                   token={token}
-                  token_address={token_address}
-                  accounts={accounts}
-                  setAccounts={setAccounts}
-                  setSelectedToken={setSelectedToken}
                 />
               </div>
             ))}
@@ -140,5 +97,3 @@ const TokenBalances = ({ token_address }: { token_address: string }) => {
     </>
   )
 }
-
-export default TokenBalances

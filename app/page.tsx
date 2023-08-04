@@ -7,7 +7,7 @@ import GlobalBalances from '@/components/Balances';
 import { getServerSession } from "next-auth/next"
 import { authOptions } from './api/auth/[...nextauth]/route'
 
-export const getTokens = async (userId?: number | null): Promise<Token[]> => {
+const getTokens = async (userId?: number | null): Promise<Token[]> => {
   if (!userId) return []
   try {
     const data = await prisma.account.findMany({
@@ -34,7 +34,7 @@ export default async function Home() {
     <>
       <section className="w-3/4 flex-center flex-col">
         <h1 className="head_text text-center mb-10">
-          Crypto Command HQ
+          Crypto HQ
         </h1>
         <Suspense fallback={<div className='text-white'>Page is Loading...</div>}>
           <GlobalBalances allTokens={allTokens} />

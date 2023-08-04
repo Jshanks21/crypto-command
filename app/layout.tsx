@@ -4,7 +4,7 @@ import Nav from '@/components/Nav'
 import Provider from '@/components/Provider'
 
 export const metadata = {
-  title: 'Crypto Command HQ',
+  title: 'Crypto HQ',
   description: 'Your Crypto Command Center',
 }
 
