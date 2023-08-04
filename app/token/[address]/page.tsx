@@ -4,7 +4,7 @@ import { getSingleAccountData } from '@/utils/actions'
 import { Token } from '@/utils/types'
 import prisma from '@/prisma/client';
 import { Suspense } from 'react'
-import TokenBalances from '@/components/client/TokenBalance';
+import TokenBalances from '@/components/TokenBalance';
 //import { TokenBalances } from '@/components/client/Balances';
 
 

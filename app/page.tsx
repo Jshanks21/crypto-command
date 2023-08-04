@@ -2,15 +2,20 @@ import 'server-only'
 import { Suspense } from 'react'
 import prisma from '@/prisma/client';
 import { getCombinedAccountData } from '@/utils/actions'
-import { Token } from '@/utils/types'
-import { GlobalBalances } from '@/components/client/Balances';
+import { Token, CustomSession } from '@/utils/types'
+import GlobalBalances from '@/components/Balances';
+import { getServerSession } from "next-auth/next"
+import { authOptions } from './api/auth/[...nextauth]/route'
 
-// Probably need to make a new GET endpoint for tokens to do the following. Then can check for logged in state in client components that use this data.
-
-// Need to update findMany to look for accounts based on user_id in Session if available. Refactor to an API route since session is only on client side?
-export const getTokens = async (): Promise<Token[]> => {
+export const getTokens = async (userId?: number | null): Promise<Token[]> => {
+  if (!userId) return []
   try {
-    const data = await prisma.account.findMany()
+    const data = await prisma.account.findMany({
+      where: {
+        userId,
+        tracking: true
+      }
+    })
     const allTokens = await getCombinedAccountData(data)
     return allTokens
   } catch (error: any) {
@@ -20,7 +25,10 @@ export const getTokens = async (): Promise<Token[]> => {
 }
 
 export default async function Home() {
-  //const allTokens = await getTokens()
+  const session: CustomSession | null = await getServerSession(authOptions)
+
+  // If we have an active session pass the user id to the getTokens function to fetch the user's account data
+  const allTokens = session?.user ? await getTokens(session.user.id) : []
 
   return (
     <>
@@ -29,7 +37,7 @@ export default async function Home() {
           Crypto Command HQ
         </h1>
         <Suspense fallback={<div className='text-white'>Page is Loading...</div>}>
-          <GlobalBalances />
+          <GlobalBalances allTokens={allTokens} />
         </Suspense>
       </section>
     </>

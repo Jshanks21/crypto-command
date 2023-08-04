@@ -6,18 +6,29 @@ import { Account } from '@prisma/client' // this convention is easy to mistake w
 
 const COVALENT_API_KEY = process.env.NEXT_PUBLIC_COVALENT_API_KEY
 
-async function fetchSavedAccounts(user_id: number | null | undefined) {
+async function fetchAccounts(user_id: number | null | undefined, onlyTrackedAccounts = true) {
   if (!user_id) {
     console.log('Missing user_id')
     return
   }
 
   // Get all accounts for user
-  const accountInfo = await prisma.account.findMany({
-    where: {
-      userId: user_id
-    }
-  })
+  // Get accounts from database for given user ID where tracking is true
+  // If onlyTracked is false then return all accounts
+  const accountInfo =
+    onlyTrackedAccounts ?
+      await prisma.account.findMany({
+        where: {
+          userId: user_id,
+          tracking: true
+        }
+      })
+      :
+      await prisma.account.findMany({
+        where: {
+          userId: user_id
+        }
+      })
 
   if (!accountInfo) {
     console.log('No accounts found for user')
@@ -32,21 +43,22 @@ async function fetchSavedAccounts(user_id: number | null | undefined) {
   return filteredAccounts
 }
 
-// TODO: this should revalidate Path at the end whether filteredAccounts is empty or not?
-async function fetchSelectedToken(token_address: string, filteredAccounts: string[]) {
-  if (!token_address || filteredAccounts.length === 0) {
+async function fetchSelectedToken(token_address: string, accounts: string[]) {
+  if (!token_address || accounts.length === 0) {
     console.log('Warning: No token address or accounts to fetch')
     return
   };
 
   try {
     // Get token data for each account
-    const tokenData: Token[][] = await Promise.all(filteredAccounts.map(async (account) => {
-      return getSingleAccountData(account, 1)
+    const tokenData: Token[][] = await Promise.all(accounts.map(async (acc) => {
+      return getSingleAccountData(acc, 1)
     }))
 
     // Flatten the arrays to have a single array with all tokens
     const allTokens: Token[] = tokenData.flat()
+
+    console.log('allTokens:', allTokens)
 
     // Filter the tokens to only include the selected token
     const selectedToken = allTokens.filter((token: Token) => {
@@ -109,21 +121,10 @@ async function getTokenDetails(token_address: string, accounts: string[], chain 
   return selectedToken
 }
 
-const getCombinedAccountData = async (accounts: Account[] | string[], chain = 1, nft = false, getCachedNFTs = false) => {
-  // Get token data for each account
-  let tokenData: Token[][] = []
-  if (typeof accounts[0] === 'string') {
-    // If the first element is a string, then we have an array of addresses
-    tokenData = await Promise.all((accounts as string[]).map(async (account) => {
-      return getSingleAccountData(account, chain, nft, getCachedNFTs)
-    }))
-    // If the first element is an object, then we have an array of Account types
-  } else if (typeof accounts[0] === 'object') {
-    tokenData = await Promise.all((accounts as Account[]).map(async (account) => {
-      return getSingleAccountData(account.address, chain, nft, getCachedNFTs)
-    }))
-  }
-
+const getCombinedAccountData = async (accounts: Account[], chain = 1, nft = false, getCachedNFTs = false) => {
+  let tokenData = await Promise.all((accounts as Account[]).map(async (account) => {
+    return getSingleAccountData(account.address, chain, nft, getCachedNFTs)
+  }))
 
   // Flatten the arrays to have a single array with all tokens
   const allTokens: Token[] = tokenData.flat()
@@ -143,4 +144,4 @@ const getCombinedAccountData = async (accounts: Account[] | string[], chain = 1,
   return combinedTokens
 }
 
-export { fetchSelectedToken, fetchSavedAccounts, getCombinedAccountData, getSingleAccountData, getTokenDetails }
+export { fetchSelectedToken, fetchAccounts, getCombinedAccountData, getSingleAccountData, getTokenDetails }

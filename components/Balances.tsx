@@ -1,72 +1,25 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Token } from '@/utils/types'
-import { useSession } from 'next-auth/react'
-import { CustomSession } from '@/utils/types'
-import { getCombinedAccountData } from '@/utils/actions'
-import { Form } from './Form'
+import Form from './Form'
 
 // Consider replacing the fetch calls to our endpoints with SERVER ACTIONS instead to reduce code and hopefully improve performance and resolve the flickering issue below.
 // Also see `useTransition()` for improving client side submissions or using server side logic/functions on the client
 // There's also 'use server' that I could add in a function within a client to make it server side if that improves performance (careful with leaking secrets though)
 // Reference: https://youtu.be/pDtlal2-oEE
 
-const GlobalBalances = () => {
-  const { data: session } = useSession()
-  const [allTokens, setAllTokens] = useState<Token[]>([])
+const GlobalBalances = ({ allTokens }: { allTokens: Token[] }) => {
+  //const { data: session } = useSession()
 
   const sortedByValue = useMemo(() => allTokens.sort((a, b) => b.quote - a.quote), [allTokens])
   const totalUSD = useMemo(() => allTokens.reduce((acc, token) => acc + token.quote, 0), [allTokens])
 
-  useEffect(() => {
-    fetchData();
-  }, [allTokens, session]);
-
-  const fetchData = async () => {
-    if (session && (session as CustomSession)?.user?.id) {
-      console.log('active session:', session)
-
-      try {
-        const response = await fetch(`/api/tokens?user_id=${(session as CustomSession)?.user?.id}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        })
-        const res = await response.json();
-
-        console.log('res:', res);
-        setAllTokens(res.data);
-      } catch (error: any) {
-        console.log('Error fetching tokens:', error)
-        throw Error('Something went wrong! We could not fetch your tokens.')
-      }
-
-    }
-    if (!session) {
-      console.log('no session');
-      try {
-        const localAccounts = localStorage.getItem('accounts');
-        if (!localAccounts) {
-          console.log('no local accounts');
-          return;
-        }
-        const allTokens = await getCombinedAccountData(JSON.parse(localAccounts));
-        //console.log('allTokens in fn:', allTokens);
-        setAllTokens(allTokens);
-      } catch (error: any) {
-        console.log('Error finding local tokens:', error)
-        throw Error('Something went wrong getting your token data!')
-      }
-
-    }
-  }
-
   return (
     <>
-      <Form setAllTokens={setAllTokens} />
-
+      <Form />
       <section className='w-full flex flex-col gap-4 mt-4'>
         <div className='flex-between border border-slate-400 rounded-xl p-4'>
           <h2 className='text-xl font-semibold text-slate-100'>
@@ -121,4 +74,4 @@ const GlobalBalances = () => {
   )
 }
 
-export { GlobalBalances }
+export default GlobalBalances;

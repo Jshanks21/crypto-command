@@ -15,10 +15,10 @@ async function getTokensHandler(req: Request) {
   try {
     const data = await prisma.account.findMany({
       where: {
-        userId: parseInt(user_id)
+        userId: parseInt(user_id),
+        tracking: true
       }
     })
-    //console.log('data:', data)
 
     const allTokens = await getCombinedAccountData(data)
     return new Response(JSON.stringify({ success: true, data: allTokens }), { status: 200 });

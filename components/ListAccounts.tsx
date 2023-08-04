@@ -1,9 +1,10 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import trash from '@/public/assets/icons/trash.svg'
-import { fetchSelectedToken } from '@/utils/actions'
+import copy from '@/public/assets/icons/copy.svg'
+import tick from '@/public/assets/icons/tick.svg'
 import { Token, CustomSession } from '@/utils/types'
 import { useSession } from 'next-auth/react'
 
@@ -18,31 +19,17 @@ type ListAccountProps = {
 function ListAccount({ token, token_address, accounts, setAccounts, setSelectedToken }: ListAccountProps) {
   const { data: session } = useSession()
   const [isPending, startTransition] = useTransition()
+  const [isCopied, setIsCopied] = useState(false)
 
-  
-  // Function that deletes account from local storage and updates local accounts & selected token state
+  console.log('isPending', isPending)
+
+  // Function that turns tracking for account off and updates accounts & selected token state
   const handleDelete = async (account: string) => {
     if (!account) return;
-    // Find account in localStorage and remove it
-    const filteredAccounts: string[] = (accounts || '[]').filter((acc: string) => acc !== account)
 
-    localStorage.setItem('accounts', JSON.stringify(filteredAccounts))
+    if (session && (session as CustomSession)?.user?.id) {
 
-    console.log('filteredAccounts', filteredAccounts)
-    setAccounts(filteredAccounts)
-
-    if (!session) {
-      try {
-        //update the token balances
-        const selectedToken = await fetchSelectedToken(token_address, filteredAccounts)
-        setSelectedToken(selectedToken || [])
-      } catch (error: any) {
-        console.log('Error deleting account:', error)
-        throw Error('Something went wrong! We could not delete your account.')
-      }
-    } else if (session && (session as CustomSession)?.user?.id) {
-
-      const res = await fetch(`/api/accounts/delete`, {
+      const res = await fetch(`/api/accounts/hide`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -59,13 +46,39 @@ function ListAccount({ token, token_address, accounts, setAccounts, setSelectedT
     }
   }
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(token.account)
+    setIsCopied(true)
+    setTimeout(() => setIsCopied(false), 2000)
+  }
+
   return (
     <>
       <div className='w-full flex-between border border-slate-400 rounded-xl p-4'>
-        <div>
+        <div className='flex'>
           <span className='orange_gradient text-xl font-bold'>
             {token.account.slice(0, 5) || '???'}...{token.account.slice(-3) || '???'}
           </span>
+          <button onClick={() => copyToClipboard()}>
+            {isCopied ? (
+              <Image
+                alt='tick'
+                src={tick}
+                width={20}
+                height={20}
+                className='ml-2'
+              />
+            ) : (
+              <Image
+                alt='copy'
+                src={copy}
+                width={20}
+                height={20}
+                className='ml-2'
+              />
+            )}
+
+          </button>
         </div>
 
         <div>

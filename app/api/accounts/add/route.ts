@@ -1,6 +1,8 @@
 import prisma from '@/prisma/client';
 
-async function addAccountHandler(req: Request) {
+// POST /api/accounts/add
+// Adds an account to the user's account list
+async function handler(req: Request) {
   const { accounts, user_id }: { accounts: string[], user_id: number} = await req.json();  
 
   // Check for expected values
@@ -27,11 +29,18 @@ async function addAccountHandler(req: Request) {
             }
           },
         });        
+      } else if (!existingAccount.tracking) {
+        // If account already exists but tracking is false, set tracking to true
+        await prisma.account.update({
+          where: { id: existingAccount.id },
+          data: { tracking: true },
+        });
       } else {
-        // Account already exists
-        console.log(`Account ${account} already exists in database`);
-        return new Response(JSON.stringify({ success: false, message: `Account ${account} already exists in database` }), { status: 409 });
+        // Account already exists and is being tracked
+        console.log(`Account ${account} already being tracked`);
+        return new Response(JSON.stringify({ success: false, message: `Account ${account} already being tracked` }), { status: 409 });        
       }
+      
     } catch (error: any) {
       console.log(`Error saving token ${account}:`, error);
       return new Response(JSON.stringify({ success: false, message: error}), { status: 500 });
@@ -40,4 +49,4 @@ async function addAccountHandler(req: Request) {
   return new Response(JSON.stringify({ success: true }), { status: 200 });
 }
 
-export { addAccountHandler as POST };
+export { handler as POST };

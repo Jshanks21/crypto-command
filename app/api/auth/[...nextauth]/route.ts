@@ -1,5 +1,5 @@
 import NextAuth from 'next-auth/next';
-import { Profile} from 'next-auth';
+import { NextAuthOptions, Profile} from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import prisma from '@/prisma/client';
 import { User as PrismaUser } from '@prisma/client';
@@ -47,7 +47,7 @@ async function findOrCreateUser(profile?: Profile) {
   }
 }
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     // TODO: Update these with new credentials for this project to replace the ones from my old project
     GoogleProvider({
@@ -75,6 +75,8 @@ const handler = NextAuth({
       }
     }
   }
-})
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST };

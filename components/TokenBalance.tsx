@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Token, CustomSession } from '@/utils/types'
-import trash from '@/public/assets/icons/trash.svg'
-import { fetchSelectedToken, fetchSavedAccounts } from '@/utils/actions'
+import { fetchSelectedToken, fetchAccounts } from '@/utils/actions'
 import ListAccount from './ListAccounts'
 import { useSession } from 'next-auth/react'
 
 const TokenBalances = ({ token_address }: { token_address: string }) => {
   const { data: session } = useSession()
+  const router = useRouter()
   const [selectedToken, setSelectedToken] = useState<Token[]>([])
   const [accounts, setAccounts] = useState<string[]>([])
 
@@ -17,24 +18,13 @@ const TokenBalances = ({ token_address }: { token_address: string }) => {
   const totalUSD = useMemo(() => selectedToken.reduce((acc, token) => acc + token.quote, 0), [selectedToken]);
   const totalUnits = useMemo(() => selectedToken.reduce((acc, token) => acc + parseInt(token.balance), 0), [selectedToken]);
 
-  console.log('sortedByValue', sortedByValue)
-  console.log('session', session)
-
-
   // Reusable function to check if there are local accounts and set them to state
   const checkAccounts: () => void = async () => {
-    if (!session) {
-      const localAccounts = localStorage.getItem('accounts')
-      if (!localAccounts) {
-        console.log('no local accounts')
-        return
-      }
-      setAccounts(JSON.parse(localAccounts))
-    } else if (session && (session as CustomSession)?.user?.id) {
+    if (session && (session as CustomSession)?.user?.id) {
       console.log('active session:', session)
 
       try {
-        const res = await fetchSavedAccounts((session as CustomSession)?.user?.id)
+        const res = await fetchAccounts((session as CustomSession)?.user?.id)
         if (!res || res.length === 0) throw Error('Something went wrong! We could not fetch your tokens.')
         setAccounts(res)
       } catch (error: any) {
@@ -44,12 +34,12 @@ const TokenBalances = ({ token_address }: { token_address: string }) => {
     }
   }
 
-  // Check for local accounts on mount
+  // Check for accounts on mount & reload
   useEffect(() => {
     checkAccounts()
-  }, [])
+  }, [session]);
 
-  // Fetch token when local accounts or token address updates (and on mount if there are local accounts)
+  // Fetch token when accounts or token address updates (and on mount if there are local accounts)
   useEffect(() => {
     if (accounts.length === 0 || !token_address) return
 
@@ -58,6 +48,11 @@ const TokenBalances = ({ token_address }: { token_address: string }) => {
       console.log({ selectedToken })
 
       setSelectedToken(selectedToken || [])
+
+      if (!selectedToken || selectedToken.length === 0) {
+        console.log('redirecting to home page')
+        router.push('/')
+      }
     })();
 
   }, [token_address, accounts]);
@@ -126,20 +121,10 @@ const TokenBalances = ({ token_address }: { token_address: string }) => {
                   USD Value
                 </h2>
               </div>
-              {/* Note: this is so the length matches to the mapped values; needs a better solution once better layout/display is found */}
-              <Image
-                alt='trash'
-                src={trash}
-                width={20}
-                height={20}
-                className='ml-2 opacity-0'
-              />
             </div>
-
 
             {sortedByValue.map((token: Token, i: number) => (
               <div key={token.contract_address + i} className='flex-center'>
-
                 <ListAccount
                   token={token}
                   token_address={token_address}
@@ -147,16 +132,11 @@ const TokenBalances = ({ token_address }: { token_address: string }) => {
                   setAccounts={setAccounts}
                   setSelectedToken={setSelectedToken}
                 />
-
               </div>
             ))}
           </section>
         </>
-      )
-      }
-
-
-
+      )}
     </>
   )
 }

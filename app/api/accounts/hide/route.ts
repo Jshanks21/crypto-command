@@ -1,6 +1,8 @@
 import prisma from '@/prisma/client';
 
-async function deleteAccountHandler(req: Request) {
+// POST /api/accounts/hide
+// Hides an account from the user's account list
+async function handler(req: Request) {
   const { account, user_id }: { account: string, user_id: number } = await req.json();
 
   // Check for expected values
@@ -26,9 +28,10 @@ async function deleteAccountHandler(req: Request) {
     });
 
     if (existingAccount && existingAccount.userId === user_id) {
-      // Delete existing account
-      await prisma.account.delete({
+      // Set tracking field for existing account to false
+      await prisma.account.update({
         where: { id: existingAccount.id },
+        data: { tracking: false },
       });
     } else {
       console.log(`Account ${account} not found in database or does not belong to user with id ${user_id}`);
@@ -43,4 +46,4 @@ async function deleteAccountHandler(req: Request) {
   return new Response(JSON.stringify({ success: true }), { status: 200 });
 }
 
-export { deleteAccountHandler as POST };
+export { handler as POST };
